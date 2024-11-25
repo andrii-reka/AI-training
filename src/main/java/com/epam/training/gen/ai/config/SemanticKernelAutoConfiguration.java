@@ -4,8 +4,8 @@ import com.azure.ai.openai.OpenAIAsyncClient;
 import com.azure.ai.openai.OpenAIClientBuilder;
 import com.azure.core.credential.AzureKeyCredential;
 import com.microsoft.semantickernel.Kernel;
-import com.microsoft.semantickernel.aiservices.openai.textcompletion.OpenAITextGenerationService;
-import com.microsoft.semantickernel.services.textcompletion.TextGenerationService;
+import com.microsoft.semantickernel.aiservices.openai.chatcompletion.OpenAIChatCompletion;
+import com.microsoft.semantickernel.services.chatcompletion.ChatCompletionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,12 +50,13 @@ public class SemanticKernelAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean(Kernel.class)
     public Kernel semanticKernel(OpenAIAsyncClient client) {
+        ChatCompletionService chatCompletionService = OpenAIChatCompletion.builder()
+                .withModelId(setModelID(deploymentName))
+                .withOpenAIAsyncClient(client)
+                .build();
+
         return Kernel.builder()
-                .withAIService(TextGenerationService.class,
-                        OpenAITextGenerationService.builder()
-                                .withModelId(setModelID(deploymentName))
-                                .withOpenAIAsyncClient(client)
-                                .build())
+                .withAIService(ChatCompletionService.class, chatCompletionService)
                 .build();
     }
 
