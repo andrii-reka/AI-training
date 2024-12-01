@@ -1,7 +1,6 @@
 package com.epam.training.gen.ai.controller;
 
-import com.microsoft.semantickernel.Kernel;
-import com.microsoft.semantickernel.orchestration.FunctionResult;
+import com.epam.training.gen.ai.service.ChatBotService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -17,7 +16,7 @@ import java.util.Map;
 public class ChatBotController {
 
     @Autowired
-    private Kernel semanticKernel;
+    private ChatBotService chatBotService;
 
     @Operation(summary = "Get chat-bot response", description = "Takes a user input and returns a chat-bot response in JSON format.")
     @GetMapping("/chat")
@@ -30,11 +29,20 @@ public class ChatBotController {
         return response;
     }
 
+    @Operation(summary = "Get chat-bot history", description = "Provides User chat history in JSON format.")
+    @GetMapping("/history")
+    public Map<String, String> getChatBotResponse() {
+        Map<String, String> response = new HashMap<>();
+
+        response.put("response", chatBotService.getHistory());
+
+        return response;
+    }
+
     private String generateResponse(String input) {
         // Use Semantic Kernel to generate the response
         try {
-            FunctionResult<Object> result = semanticKernel.invokePromptAsync(input).block();
-            return String.valueOf(result.getResult());
+            return chatBotService.getResponse(input);
         } catch (Exception e) {
             return "Error generating response: " + e.getMessage();
         }
