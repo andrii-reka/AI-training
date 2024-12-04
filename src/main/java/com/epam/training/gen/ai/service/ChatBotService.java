@@ -1,5 +1,6 @@
 package com.epam.training.gen.ai.service;
 
+import com.epam.training.gen.ai.model.ChatMessage;
 import com.microsoft.semantickernel.Kernel;
 import com.microsoft.semantickernel.orchestration.InvocationContext;
 import com.microsoft.semantickernel.services.ServiceNotFoundException;
@@ -7,50 +8,88 @@ import com.microsoft.semantickernel.services.chatcompletion.AuthorRole;
 import com.microsoft.semantickernel.services.chatcompletion.ChatCompletionService;
 import com.microsoft.semantickernel.services.chatcompletion.ChatHistory;
 import com.microsoft.semantickernel.services.chatcompletion.ChatMessageContent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ChatBotService {
 
     @Autowired
-    private ChatHistory chatHistory;
-    @Autowired
     private Kernel kernel;
+
     @Autowired
     private InvocationContext invocationContext;
 
-    public String getResponse(String prompt) throws ServiceNotFoundException {
+    @Autowired
+    private ChatCompletionService chatCompletionService;
 
-        ChatCompletionService chatCompletionService = kernel.getService(
-                ChatCompletionService.class);
-        //chatCompletionService.getChatMessageContentsAsync(prompt, kernel, invocationContext);
-        List<ChatMessageContent<?>> results = chatCompletionService.getChatMessageContentsAsync(
-                prompt, kernel, null).block();
+    private ChatHistory chatHistory = new ChatHistory();
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ChatBotService.class);
+
+    /**
+     * Retrieves a response from the chatbot based on the given prompt.
+     *
+     * @param prompt User's input prompt.
+     * @return The chatbot's response message.
+     * @throws ServiceNotFoundException If there's an issue while fetching response.
+     */
+    public ChatMessage getResponse(String prompt) throws ServiceNotFoundException {
         chatHistory.addUserMessage(prompt);
-        for (ChatMessageContent<?> result : results) {
-            // Print the results
-            if (result.getAuthorRole() == AuthorRole.ASSISTANT && result.getContent() != null) {
-                System.out.println("Assistant > " + result);
+
+        List<ChatMessageContent<?>> results = chatCompletionService.getChatMessageContentsAsync(chatHistory, kernel, invocationContext).block();
+
+        if (results != null) {
+            for (ChatMessageContent<?> result : results) {
+                if (result.getAuthorRole() == AuthorRole.ASSISTANT && result.getContent() != null) {
+                    LOGGER.info("Assistant > " + result);
+                }
+                chatHistory.addMessage(result);
             }
-            // Add the message from the agent to the chat history
-            chatHistory.addMessage(result);
+        } else {
+            // Throwing a custom exception or handling as per business logic
+            throw new ServiceNotFoundException("No response received from ChatCompletionService");
         }
-        return chatHistory.getLastMessage().get().getContent();
+
+        ChatMessageContent<?> lastMessage = chatHistory.getLastMessage().orElseThrow(() ->
+                new ServiceNotFoundException("No messages in chat history"));
+        return new ChatMessage(lastMessage.getAuthorRole().toString(), lastMessage.getContent());
     }
 
-    public String getHistory(){
-        StringBuilder stringBuilder = new StringBuilder();
-        chatHistory.forEach(chatMessageContent -> {
-            if (chatMessageContent.getAuthorRole() == AuthorRole.ASSISTANT) {
-                stringBuilder.append("Bot: ").append(chatMessageContent.getContent());
-            } else if (chatMessageContent.getAuthorRole() == AuthorRole.USER) {
-                stringBuilder.append("User: ").append(chatMessageContent.getContent());
-            }
-            stringBuilder.append(System.getProperty("line.separator"));
-        });
-        return stringBuilder.toString();
+    /**
+     * Sets the context for the chat by starting with a system message.
+     *
+     * @param context Initial context message.
+     */
+    public void setContext(String context) {
+        cleanChat();
+        LOGGER.info("Set context: {}", context);
+        chatHistory.addSystemMessage(context);
+    }
+
+    /**
+     * Clears the chat history.
+     */
+    public void cleanChat() {
+        LOGGER.info("Cleaning chat history");
+        chatHistory = new ChatHistory();
+    }
+
+    /**
+     * Retrieves the entire chat history.
+     *
+     * @return List of all chat messages.
+     */
+    public List<ChatMessage> getHistory() {
+        return chatHistory.getMessages().stream()
+                .map(msgContent -> new ChatMessage(
+                        msgContent.getAuthorRole().toString(),
+                        msgContent.getContent()))
+                .collect(Collectors.toList());
     }
 }

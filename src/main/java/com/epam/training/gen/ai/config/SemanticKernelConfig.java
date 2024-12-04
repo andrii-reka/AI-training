@@ -19,19 +19,21 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.Map;
+
 @Configuration
-public class SemanticKernelAutoConfiguration {
+public class SemanticKernelConfig {
 
     @Value("${client-openai-endpoint}")
     private String endpoint;
     @Value("${client-openai-key}")
     private String key;
-    @Value("${client-openai-deployment-name}")
-    private String deploymentName;
-    @Value("${prompt-execution-settings.temperature:0.6}")
-    private double temperature;
+    @Value("${client-openai-deployment-name:gpt-35-turbo}")
+    private String deployment;
+    @Value("${prompt-execution-settings-temperature:0.6}")
+    private Double temperature;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SemanticKernelAutoConfiguration.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SemanticKernelConfig.class);
 
     /**
      * Creates a {@link OpenAIAsyncClient} with the endpoint and key specified in the
@@ -50,11 +52,15 @@ public class SemanticKernelAutoConfiguration {
 
 
     @Bean
-    public InvocationContext invocationContext() {
-        return new InvocationContext.Builder()
-                .withReturnMode(InvocationReturnMode.LAST_MESSAGE_ONLY)
+    public InvocationContext invocationContext(@Value("${prompt-execution-settings.temperature:0.6}") Double temperature) {
+        return InvocationContext.builder()
                 .withToolCallBehavior(ToolCallBehavior.allowAllKernelFunctions(true))
-                .withPromptExecutionSettings(PromptExecutionSettings.builder().withTemperature(temperature).build())
+                .withReturnMode(InvocationReturnMode.FULL_HISTORY)
+                .withPromptExecutionSettings(
+                        PromptExecutionSettings.builder()
+                                .withTemperature(temperature)
+                                .build()
+                )
                 .build();
     }
 
@@ -66,7 +72,7 @@ public class SemanticKernelAutoConfiguration {
     @Bean
     public ChatCompletionService chatCompletionService(OpenAIAsyncClient client) {
         return OpenAIChatCompletion.builder()
-                .withModelId(setModelID(deploymentName))
+                .withModelId(deployment)
                 .withOpenAIAsyncClient(client)
                 .build();
     }
@@ -85,15 +91,11 @@ public class SemanticKernelAutoConfiguration {
                 .build();
     }
 
-    private static String setModelID(String deploymentName) {
-        String modelId;
-        if (deploymentName == null || deploymentName.isEmpty()) {
-            modelId = "gpt-35-turbo";
-            LOGGER.warn("No deployment name specified, using default model id: " + modelId);
-        } else {
-            modelId = deploymentName;
-            LOGGER.info("Using model id: " + modelId);
-        }
-        return modelId;
+    @Bean
+    public Map<String, PromptExecutionSettings> promptExecutionsSettingsMap(
+            @Value("${client-openai-deployment-name}") String deploymentName) {
+        return Map.of(deploymentName, PromptExecutionSettings.builder()
+                .withTemperature(1.0)
+                .build());
     }
 }
