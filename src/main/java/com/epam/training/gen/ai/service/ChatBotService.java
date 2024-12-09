@@ -44,16 +44,12 @@ public class ChatBotService {
 
         List<ChatMessageContent<?>> results = chatCompletionService.getChatMessageContentsAsync(chatHistory, kernel, invocationContext).block();
 
-        if (results != null) {
-            for (ChatMessageContent<?> result : results) {
-                if (result.getAuthorRole() == AuthorRole.ASSISTANT && result.getContent() != null) {
-                    LOGGER.info("Assistant > " + result);
-                }
-                chatHistory.addMessage(result);
+
+        for (ChatMessageContent<?> result : results) {
+            if (result.getAuthorRole() == AuthorRole.ASSISTANT && result.getContent() != null) {
+                LOGGER.info("Assistant > " + result);
             }
-        } else {
-            // Throwing a custom exception or handling as per business logic
-            throw new ServiceNotFoundException("No response received from ChatCompletionService");
+            chatHistory.addMessage(result);
         }
 
         ChatMessageContent<?> lastMessage = chatHistory.getLastMessage().orElseThrow(() ->
