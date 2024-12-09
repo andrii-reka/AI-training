@@ -15,3 +15,4 @@ springdoc:
 client-openai-key: ${API_KEY}
 client-openai-endpoint: ${API_URI}
 client-openai-deployment-name: gpt-35-turbo
+prompt-execution-settings-temperature: 0.7
