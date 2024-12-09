@@ -1,11 +1,10 @@
 package com.epam.training.gen.ai.service;
 
+import com.epam.training.gen.ai.config.AIProperties;
+import com.epam.training.gen.ai.config.SemanticKernelProvider;
 import com.epam.training.gen.ai.model.ChatMessage;
-import com.microsoft.semantickernel.Kernel;
-import com.microsoft.semantickernel.orchestration.InvocationContext;
 import com.microsoft.semantickernel.services.ServiceNotFoundException;
 import com.microsoft.semantickernel.services.chatcompletion.AuthorRole;
-import com.microsoft.semantickernel.services.chatcompletion.ChatCompletionService;
 import com.microsoft.semantickernel.services.chatcompletion.ChatHistory;
 import com.microsoft.semantickernel.services.chatcompletion.ChatMessageContent;
 import org.slf4j.Logger;
@@ -20,13 +19,9 @@ import java.util.stream.Collectors;
 public class ChatBotService {
 
     @Autowired
-    private Kernel kernel;
-
+    private AIProperties aiProperties;
     @Autowired
-    private InvocationContext invocationContext;
-
-    @Autowired
-    private ChatCompletionService chatCompletionService;
+    private SemanticKernelProvider semanticKernelProvider;
 
     private ChatHistory chatHistory = new ChatHistory();
 
@@ -42,7 +37,7 @@ public class ChatBotService {
     public ChatMessage getResponse(String prompt) throws ServiceNotFoundException {
         chatHistory.addUserMessage(prompt);
 
-        List<ChatMessageContent<?>> results = chatCompletionService.getChatMessageContentsAsync(chatHistory, kernel, invocationContext).block();
+        List<ChatMessageContent<?>> results = semanticKernelProvider.chatCompletionService().getChatMessageContentsAsync(chatHistory, semanticKernelProvider.semanticKernel(), semanticKernelProvider.invocationContext()).block();
 
 
         for (ChatMessageContent<?> result : results) {
@@ -66,6 +61,21 @@ public class ChatBotService {
         cleanChat();
         LOGGER.info("Set context: {}", context);
         chatHistory.addSystemMessage(context);
+    }
+
+    /**
+     * Sets the mode for the chat.
+     *
+     * @param deploymentName AI model.
+     */
+    public void setModel(String deploymentName) {
+        aiProperties.setDeployment(deploymentName);
+        semanticKernelProvider.refreshBeans();
+        cleanChat();
+
+        LOGGER.info("Set model: {}", deploymentName);
+
+
     }
 
     /**

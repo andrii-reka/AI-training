@@ -10,7 +10,6 @@ import com.microsoft.semantickernel.orchestration.InvocationReturnMode;
 import com.microsoft.semantickernel.orchestration.PromptExecutionSettings;
 import com.microsoft.semantickernel.orchestration.ToolCallBehavior;
 import com.microsoft.semantickernel.services.chatcompletion.ChatCompletionService;
-import com.microsoft.semantickernel.services.chatcompletion.ChatHistory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,7 +20,7 @@ import org.springframework.context.annotation.Configuration;
 
 import java.util.Map;
 
-@Configuration
+//@Configuration
 public class SemanticKernelConfig {
 
     @Value("${client-openai-endpoint}")
@@ -35,21 +34,13 @@ public class SemanticKernelConfig {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SemanticKernelConfig.class);
 
-    /**
-     * Creates a {@link OpenAIAsyncClient} with the endpoint and key specified in the
-     *
-     * @return the {@link OpenAIAsyncClient}
-     */
     @Bean
-    @ConditionalOnClass(OpenAIAsyncClient.class)
-    @ConditionalOnMissingBean(OpenAIAsyncClient.class)
     public OpenAIAsyncClient openAIAsyncClient() {
         return new OpenAIClientBuilder()
                 .endpoint(endpoint)
                 .credential(new AzureKeyCredential(key))
                 .buildAsyncClient();
     }
-
 
     @Bean
     public InvocationContext invocationContext(@Value("${prompt-execution-settings.temperature:0.6}") Double temperature) {
@@ -65,11 +56,6 @@ public class SemanticKernelConfig {
     }
 
     @Bean
-    public ChatHistory chatHistory() {
-        return new ChatHistory();
-    }
-
-    @Bean
     public ChatCompletionService chatCompletionService(OpenAIAsyncClient client) {
         return OpenAIChatCompletion.builder()
                 .withModelId(deployment)
@@ -77,14 +63,7 @@ public class SemanticKernelConfig {
                 .build();
     }
 
-    /**
-     * Creates a {@link Kernel} with a default
-     * {@link com.microsoft.semantickernel.services.AIService} that uses the
-     *
-     * @return the {@link Kernel}
-     */
     @Bean
-    @ConditionalOnMissingBean(Kernel.class)
     public Kernel semanticKernel(ChatCompletionService chatCompletionService) {
         return Kernel.builder()
                 .withAIService(ChatCompletionService.class, chatCompletionService)
