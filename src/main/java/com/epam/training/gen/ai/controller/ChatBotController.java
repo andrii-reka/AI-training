@@ -1,7 +1,7 @@
 package com.epam.training.gen.ai.controller;
 
 import com.epam.training.gen.ai.model.ChatMessage;
-import com.epam.training.gen.ai.service.ChatBotService;
+import com.epam.training.gen.ai.service.imp.ChatBotService;
 import com.microsoft.semantickernel.services.ServiceNotFoundException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -52,7 +52,7 @@ public class ChatBotController {
 
     @Operation(summary = "Clean a history and setup new AI model", description = "Provides new context for a chat")
     @GetMapping("/set-deployment-name")
-    public String setModel(@RequestParam(defaultValue = "Mixtral-8x7B-Instruct-v0.1") String deploymentName)        {
+    public String setModel(@RequestParam(defaultValue = "Mixtral-8x7B-Instruct-v0.1") String deploymentName) {
 
         chatBotService.setModel(deploymentName);
         return String.format("Deployment updated to %s", deploymentName);

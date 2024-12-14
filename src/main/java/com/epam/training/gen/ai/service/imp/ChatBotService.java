@@ -1,4 +1,4 @@
-package com.epam.training.gen.ai.service;
+package com.epam.training.gen.ai.service.imp;
 
 import com.epam.training.gen.ai.config.AIProperties;
 import com.epam.training.gen.ai.config.SemanticKernelProvider;
