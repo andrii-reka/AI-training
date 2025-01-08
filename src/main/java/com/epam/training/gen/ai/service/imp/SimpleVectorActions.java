@@ -16,7 +16,9 @@ import reactor.core.publisher.Mono;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.random.RandomGenerator;
 
 import static io.qdrant.client.PointIdFactory.id;
 import static io.qdrant.client.ValueFactory.value;
@@ -58,7 +60,7 @@ public class SimpleVectorActions {
 
         var pointStructs = new ArrayList<PointStruct>();
         points.forEach(point -> {
-            var pointStruct = getPointStruct(point);
+            var pointStruct = getPointStruct(point, text);
             pointStructs.add(pointStruct);
         });
 
@@ -103,11 +105,11 @@ public class SimpleVectorActions {
      * @param point the vector values
      * @return a {@link PointStruct} object containing the vector and associated metadata
      */
-    private PointStruct getPointStruct(List<Float> point) {
+    private PointStruct getPointStruct(List<Float> point, String text) {
         return PointStruct.newBuilder()
-                .setId(id(1))
+                .setId(id(RandomGenerator.getDefault().nextInt()))
                 .setVectors(vectors(point))
-                .putAllPayload(Map.of("info", value("Some info")))
+                .putAllPayload(Map.of("info", value(text)))
                 .build();
     }
 

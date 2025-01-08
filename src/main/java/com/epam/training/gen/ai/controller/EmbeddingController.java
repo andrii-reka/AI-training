@@ -18,7 +18,7 @@ import java.util.concurrent.ExecutionException;
 
 @RestController
 @Tag(name = "Embedding Controller", description = "Controller for Embedding and Vector DB interactions")
-public class VectorController {
+public class EmbeddingController {
 
     @Autowired
     private VectorDBService vectorService;
@@ -26,7 +26,7 @@ public class VectorController {
     @Autowired
     private SimpleVectorActions simpleVectorActions;
 
-    @Operation(summary = "Perform simple test (ignore)", description = "")
+    @Operation(summary = "Perform simple test (ignore)", description = "Perform simple test (ignore)" )
     @GetMapping("/perform-test")
     public Map<String, String> performTest() throws ServiceNotFoundException, ExecutionException, InterruptedException {
         Map<String, String> response = new HashMap<>();
@@ -39,50 +39,49 @@ public class VectorController {
         return response;
     }
 
-    @Operation(summary = "Create Collection", description = "")
-    @PostMapping("/create-collection")
-    public Map<String, CollectionOperationResponse > createCollection(@RequestParam(defaultValue = "test-collection") String collectionName) throws ExecutionException, InterruptedException {
-        Map<String, CollectionOperationResponse> response = new HashMap<>();
+    @Operation(summary = "Create Collection", description = "Create Collection")
+    @GetMapping("/create-collection")
+    public Map<String, String> createCollection(@RequestParam(defaultValue = "test-collection") String collectionName) throws ExecutionException, InterruptedException {
+        Map<String, String> response = new HashMap<>();
 
-        response.put("response", vectorService.createCollection(collectionName));
+        response.put("response", vectorService.createCollection(collectionName).toString());
 
         return response;
     }
 
-    @Operation(summary = "Delete collection", description = "")
+    @Operation(summary = "Delete collection", description = "Delete collection")
     @DeleteMapping("/delete-collection")
-    public Map<String, CollectionOperationResponse > deleteCollection(@RequestParam(defaultValue = "test-collection") String collectionName) throws ServiceNotFoundException, ExecutionException, InterruptedException {
-        Map<String, CollectionOperationResponse> response = new HashMap<>();
+    public Map<String, String > deleteCollection(@RequestParam(defaultValue = "test-collection") String collectionName) throws ServiceNotFoundException, ExecutionException, InterruptedException {
+        Map<String, String> response = new HashMap<>();
 
-        response.put("response", vectorService.deleteCollection(collectionName));
+        response.put("response", vectorService.deleteCollection(collectionName).toString());
 
         return response;
     }
 
-
-    @Operation(summary = "Process text", description = "")
+    @Operation(summary = "Process text", description = "Process text")
     @GetMapping("/process-text")
-    public Map<String, Points.UpdateResult > processAndSaveText(@RequestParam(defaultValue = "test-collection") String collectionName, @RequestParam String text) throws ExecutionException, InterruptedException {
-        Map<String, Points.UpdateResult> response = new HashMap<>();
+    public Map<String, String > processAndSaveText(@RequestParam(defaultValue = "test-collection") String collectionName, @RequestParam String text) throws ExecutionException, InterruptedException {
+        Map<String, String> response = new HashMap<>();
 
 
-        response.put("response", simpleVectorActions.processAndSaveText(collectionName, text));
+        response.put("response", simpleVectorActions.processAndSaveText(collectionName, text).toString());
 
         return response;
     }
 
-    @Operation(summary = "Search", description = "")
+    @Operation(summary = "Search", description = "search")
     @GetMapping("/search")
-    public Map<String, List<Points.ScoredPoint>> search(@RequestParam(defaultValue = "test-collection") String collectionName, @RequestParam String text) throws ExecutionException, InterruptedException {
-        Map<String, List<Points.ScoredPoint>> response = new HashMap<>();
+    public Map<String, String> search(@RequestParam(defaultValue = "test-collection") String collectionName, @RequestParam String text) throws ExecutionException, InterruptedException {
+        Map<String, String> response = new HashMap<>();
 
 
-        response.put("response", simpleVectorActions.search(collectionName, text));
+        response.put("response", simpleVectorActions.search(collectionName, text).toString());
 
         return response;
     }
 
-    @Operation(summary = "Generate embedding", description = "")
+    @Operation(summary = "Generate embedding", description = "Generate embeddings")
     @GetMapping("/get-embeddings")
     public Map<String, List<EmbeddingItem>> getEmbeddings(@RequestParam String text) throws ExecutionException, InterruptedException {
         Map<String, List<EmbeddingItem>> response = new HashMap<>();

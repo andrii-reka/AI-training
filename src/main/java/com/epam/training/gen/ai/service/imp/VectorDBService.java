@@ -42,7 +42,7 @@ public class VectorDBService {
         var result = qdrantClient.createCollectionAsync(name,
                         Collections.VectorParams.newBuilder()
                                 .setDistance(Collections.Distance.Cosine)
-                                .setSize(20)
+                                .setSize(1536)
                                 .build())
                 .get();
         log.info("Collection was created: [{}]", result.getResult());
