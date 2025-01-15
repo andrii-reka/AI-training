@@ -1,11 +1,9 @@
 package com.epam.training.gen.ai.controller;
 
 import com.azure.ai.openai.models.EmbeddingItem;
-import com.epam.training.gen.ai.service.imp.SimpleVectorActions;
+import com.epam.training.gen.ai.service.imp.EmbeddingsService;
 import com.epam.training.gen.ai.service.imp.VectorDBService;
 import com.microsoft.semantickernel.services.ServiceNotFoundException;
-import io.qdrant.client.grpc.Collections.CollectionOperationResponse;
-import io.qdrant.client.grpc.Points;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,20 +22,7 @@ public class EmbeddingController {
     private VectorDBService vectorService;
 
     @Autowired
-    private SimpleVectorActions simpleVectorActions;
-
-    @Operation(summary = "Perform simple test (ignore)", description = "Perform simple test (ignore)" )
-    @GetMapping("/perform-test")
-    public Map<String, String> performTest() throws ServiceNotFoundException, ExecutionException, InterruptedException {
-        Map<String, String> response = new HashMap<>();
-        vectorService.addVectors();
-        vectorService.addFilter();
-        vectorService.runQuery();
-
-        response.put("response", "check logs");
-
-        return response;
-    }
+    private EmbeddingsService embeddingsService;
 
     @Operation(summary = "Create Collection", description = "Create Collection")
     @GetMapping("/create-collection")
@@ -65,7 +50,7 @@ public class EmbeddingController {
         Map<String, String> response = new HashMap<>();
 
 
-        response.put("response", simpleVectorActions.processAndSaveText(collectionName, text).toString());
+        response.put("response", embeddingsService.processAndSaveText(collectionName, text).toString());
 
         return response;
     }
@@ -76,7 +61,7 @@ public class EmbeddingController {
         Map<String, String> response = new HashMap<>();
 
 
-        response.put("response", simpleVectorActions.search(collectionName, text).toString());
+        response.put("response", embeddingsService.search(collectionName, text).toString());
 
         return response;
     }
@@ -87,7 +72,7 @@ public class EmbeddingController {
         Map<String, List<EmbeddingItem>> response = new HashMap<>();
 
 
-        response.put("response", simpleVectorActions.getEmbeddings(text));
+        response.put("response", embeddingsService.getEmbeddings(text));
 
         return response;
     }

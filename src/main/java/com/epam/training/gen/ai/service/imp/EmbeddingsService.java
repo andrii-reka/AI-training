@@ -16,7 +16,6 @@ import reactor.core.publisher.Mono;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.random.RandomGenerator;
 
@@ -34,7 +33,7 @@ import static io.qdrant.client.VectorsFactory.vectors;
 @Slf4j
 @Service
 @AllArgsConstructor
-public class SimpleVectorActions {
+public class EmbeddingsService {
 
     @Autowired
     private OpenAIAsyncClient openAIAsyncClient;
@@ -46,10 +45,15 @@ public class SimpleVectorActions {
      * and saves them in the Qdrant collection.
      *
      * @param text the text to be processed into embeddings
-     * @throws ExecutionException if the vector saving operation fails
+     * @throws ExecutionException   if the vector saving operation fails
      * @throws InterruptedException if the thread is interrupted during execution
      */
     public Points.UpdateResult processAndSaveText(String collectionName, String text) throws ExecutionException, InterruptedException {
+        var collectionExists = vectorDBService.collectionExists(collectionName);
+        if (!collectionExists) {
+            vectorDBService.createCollection(collectionName);
+        }
+
         var embeddings = getEmbeddings(text);
         var points = new ArrayList<List<Float>>();
         embeddings.forEach(
@@ -74,7 +78,7 @@ public class SimpleVectorActions {
      *
      * @param text the text to search for similar vectors
      * @return a list of scored points representing similar vectors
-     * @throws ExecutionException if the search operation fails
+     * @throws ExecutionException   if the search operation fails
      * @throws InterruptedException if the thread is interrupted during execution
      */
     public List<ScoredPoint> search(String collectionName, String text) throws ExecutionException, InterruptedException {
@@ -96,7 +100,6 @@ public class SimpleVectorActions {
         var embeddings = retrieveEmbeddings(text);
         return embeddings.block().getData();
     }
-
 
 
     /**
